@@ -1,0 +1,11 @@
+docker build --tag runner-image .
+
+docker run \
+  --detach \
+  --env ORGANIZATION=acastroo \
+  --env REPO=runner_test \
+  --env TOKEN=ATZIGNHOORLU3VCRMQYFRRLBCEJQY \
+  --env _RUNNER_WORKDIR=_work \
+  --env NAME=runner \
+  --name runner \
+  runner-image
