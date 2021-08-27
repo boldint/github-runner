@@ -2,7 +2,7 @@ FROM ubuntu:20.04 as builder
 WORKDIR /tmp
 RUN \
   apt-get -yqq update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends curl jq wget python3-minimal python3-pip python3-dev apt-transport-https ca-certificates gnupg software-properties-common lsb-release sudo unzip make g++ && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends curl jq wget apt-transport-https ca-certificates gnupg software-properties-common lsb-release sudo unzip && \
   # GOOGLE CLOUD SDK
   wget -q https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-350.0.0-linux-x86_64.tar.gz -O ./google-cloud-sdk.tar.gz && \
   tar zxf google-cloud-sdk.tar.gz && mv google-cloud-sdk / && \
@@ -21,12 +21,6 @@ RUN \
   # HELM
   wget -q https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz -O helm-v3.6.3-linux-amd64.tar.gz && \
   tar -zxvf helm-v3.6.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/ && \
-  # PRE-COMMIT
-  pip3 -q install pre-commit --no-cache-dir && \ 
-  # CHECKOV
-  pip3 -q install checkov --no-cache-dir && \
-  # JSONNET
-  pip3 -q install jsonnet --no-cache-dir && \
   # INFRACOST
   curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh && \
   # TFLINT
@@ -53,17 +47,14 @@ ENV PATH="${PATH}:/google-cloud-sdk/bin"
 # MULTI-STAGE
 COPY --from=builder /google-cloud-sdk /google-cloud-sdk
 COPY --from=builder /home/actions/actions-runner/. /home/actions/actions-runner/
-COPY --from=builder /usr/local/bin/. /usr/local/bin
-#COPY --from=builder /usr/local/bin/terraform /usr/local/bin
-#COPY --from=builder /usr/local/bin/terragrunt /usr/local/bin
-#COPY --from=builder /usr/local/bin/infracost /usr/local/bin
-#COPY --from=builder /usr/local/bin/tflint /usr/local/bin
-#COPY --from=builder /usr/local/bin/gitversion /usr/local/bin
-#COPY --from=builder /usr/local/bin/git-chglog /usr/local/bin
-#COPY --from=builder /usr/local/bin/pre-commit /usr/local/bin
-#COPY --from=builder /usr/local/bin/checkov /usr/local/bin
-#COPY --from=builder /usr/local/bin/kubectl /usr/local/bin
-#COPY --from=builder /usr/local/bin/helm /usr/local/bin
+COPY --from=builder /usr/local/bin/gitversion /usr/local/bin
+COPY --from=builder /usr/local/bin/git-chglog /usr/local/bin
+COPY --from=builder /usr/local/bin/terraform /usr/local/bin
+COPY --from=builder /usr/local/bin/terragrunt /usr/local/bin
+COPY --from=builder /usr/local/bin/helm /usr/local/bin
+COPY --from=builder /usr/local/bin/infracost /usr/local/bin
+COPY --from=builder /usr/local/bin/tflint /usr/local/bin
+COPY --from=builder /usr/local/bin/kubectl /usr/local/bin
 
 # FILES NEEDED
 COPY infracost_api_creds.yml /home/actions/.config/infracost/credentials.yml
@@ -73,7 +64,13 @@ COPY .tflint.hcl /home/actions/actions-runner/.
 # STARTER
 RUN \
   apt-get -yqq update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends software-properties-common apt-transport-https ca-certificates sudo && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends python3-minimal python3-pip python3-dev software-properties-common apt-transport-https ca-certificates sudo make g++ && \
+  # PRE-COMMIT
+  pip3 -q install pre-commit --no-cache-dir && \ 
+  # CHECKOV
+  pip3 -q install checkov --no-cache-dir && \
+  # JSONNET
+  pip3 -q install jsonnet --no-cache-dir && \
   # ACTIONS-RUNNER USER  
   useradd actions && chown -R actions ~actions && \
   #TERRAGRUNT PERMISSIONS
